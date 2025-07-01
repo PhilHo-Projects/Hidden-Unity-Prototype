@@ -65,7 +65,7 @@ namespace Core.WebSocket
                 // Show message locally first
                 ShowChatText($"{PlayerPrefs.GetString("Username", "Me")}: {userInputText}");
                 //ShowChatText($"Me: {userInputText}");
-                _wsHandler.SendWebSocketPackage(chatMessage);
+                _wsHandler.SendPacket(chatMessage);
 
                 chatInput.text = "";
                 chatInput.ActivateInputField();

@@ -63,7 +63,7 @@ namespace Core.WebSocket
                 Response = true
             };
             
-            _networkHandler.SendWebSocketPackage(matchRequest);
+            _networkHandler.SendPacket(matchRequest);
             
             // Start timeout monitoring
             _timeoutCoroutine = _networkHandler.StartCoroutine(MatchmakingTimeoutCoroutine());
@@ -81,7 +81,7 @@ namespace Core.WebSocket
                 Response = false
             };
             
-            _networkHandler.SendWebSocketPackage(cancelRequest);
+            _networkHandler.SendPacket(cancelRequest);
             
             // Stop timeout coroutine if running
             if (_timeoutCoroutine != null)
@@ -106,7 +106,7 @@ namespace Core.WebSocket
                     Type = PacketType.MatchmakingRequest,
                     Response = false
                 };
-                _networkHandler.SendWebSocketPackage(cancelRequest);
+                _networkHandler.SendPacket(cancelRequest);
                 
                 Debug.Log("Matchmaking search timed out");
                 OnSearchCancelled?.Invoke();

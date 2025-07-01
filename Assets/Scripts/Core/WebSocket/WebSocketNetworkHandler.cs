@@ -6,6 +6,7 @@ using Core.Hidden;
 using NativeWebSocket;
 using Debug = UnityEngine.Debug;
 using MessagePack;
+using UnityEngine;
 
 namespace Core.WebSocket
 {
@@ -14,7 +15,7 @@ namespace Core.WebSocket
         // ## Constants
         private const string ServerUrlHttPs = "wss://sargaz.popnux.com/ws";
         private const string ServerUrlHttp = "ws://18.226.150.199:8080"; 
-        private const string ServerUrlUbuntu = "wss://sargaz.popnux.com/ws";
+        private const string ServerUrlUbuntu = "ws://philippeho.popnux.com:8080";
         private const string ServerUrlLocal = "ws://localhost:8080";
 
         // ## Core Components
@@ -183,7 +184,34 @@ namespace Core.WebSocket
         
         #region Sending
         
-        public void SendWebSocketPackage<T>(T package) where T : BaseNetworkPacket
+        // public void SendPacket<T>(T package) where T : BaseNetworkPacket
+        // {
+        //     if (_webSocket == null || _webSocket.State != WebSocketState.Open)
+        //     {
+        //         Debug.LogError("Cannot send message: WebSocket is not connected");
+        //         return;
+        //     }
+        //
+        //     package.SenderId = _clientId;
+        //
+        //     try 
+        //     {
+        //         byte[] bytes = MessagePackSerializer.Serialize(package);
+        //         SendWebSocketPackageAsync(bytes).ContinueWith(task => 
+        //         {
+        //             if (task.IsFaulted)
+        //             {
+        //                 Debug.LogError($"Send failed: {task.Exception?.Message}");
+        //             }
+        //         });
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Debug.LogError($"Serialization failed: {ex}");
+        //     }
+        // }
+        
+        public void SendPacket<T>(T package) where T : BaseNetworkPacket
         {
             if (_webSocket == null || _webSocket.State != WebSocketState.Open)
             {
@@ -196,7 +224,7 @@ namespace Core.WebSocket
             try 
             {
                 byte[] bytes = MessagePackSerializer.Serialize(package);
-                SendWebSocketPackageAsync(bytes).ContinueWith(task => 
+                SendPacketInternalAsync(package).ContinueWith(task => 
                 {
                     if (task.IsFaulted)
                     {
@@ -210,32 +238,149 @@ namespace Core.WebSocket
             }
         }
         
-        private void LogPackageDebugInfo(BaseNetworkPacket package)
+                
+        // private readonly Dictionary<PacketType, TaskCompletionSource<bool>> _pendingRequests = new();
+        // public async Task<bool> SendPacketReliableWithTasks<T>(T packet) where T : BaseNetworkPacket
+        // {
+        //     if (_webSocket == null || _webSocket.State != WebSocketState.Open)
+        //     {
+        //         Debug.LogError("Cannot send message: WebSocket is not connected");
+        //         return false;
+        //     }
+        //
+        //     // Set up response waiting
+        //     var tcs = new TaskCompletionSource<bool>();
+        //     _pendingRequests[packet.Type] = tcs;
+        //
+        //     packet.SenderId = _clientId;
+        //
+        //     try
+        //     {
+        //         // Send the packet
+        //         await SendPacketInternalAsync(packet);
+        //
+        //         // Wait for server response with timeout (WebGL-safe coroutine timeout)
+        //         bool timeoutReached = false;
+        //         StartCoroutine(TaskTimeoutCoroutine(packet.Type, 5f, () => timeoutReached = true));
+        //
+        //         // Wait for either response or timeout
+        //         while (!tcs.Task.IsCompleted && !timeoutReached)
+        //         {
+        //             await Task.Delay(50); // Small delay
+        //         }
+        //
+        //         // Clean up
+        //         _pendingRequests.Remove(packet.Type);
+        //
+        //         if (timeoutReached)
+        //         {
+        //             Debug.LogError($"{packet.Type} confirmation timed out");
+        //             return false;
+        //         }
+        //
+        //         return await tcs.Task;
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _pendingRequests.Remove(packet.Type);
+        //         Debug.LogError($"Send failed: {ex.Message}");
+        //         return false;
+        //     }
+        // }
+        
+        // VERSION 2: Callback-based (should be WebGL-safe)
+        private readonly Dictionary<PacketType, Action<bool>> _pendingCallbacks = new();
+
+        public void SendPacketReliableWithCallbacks<T>(T packet, Action<bool> onComplete) where T : BaseNetworkPacket
         {
-            Debug.Log($"Sending package of type: {package.GetType().Name}");
-            Debug.Log($"Package contents: SenderId={package.SenderId}, Type={package.Type}");
-    
-            if (package is StringPacket chatData)
+            if (_webSocket == null || _webSocket.State != WebSocketState.Open)
             {
-                Debug.Log($"Chat text: {chatData.Text}");
+                Debug.LogError("Cannot send message: WebSocket is not connected");
+                onComplete?.Invoke(false);
+                return;
             }
+
+            packet.SenderId = _clientId;
     
-            byte[] bytes = MessagePackSerializer.Serialize(package.GetType(), package);
-            Debug.Log($"Serialized bytes: [{string.Join(", ", bytes)}]");
+            // Store the callback for this packet type
+            _pendingCallbacks[packet.Type] = onComplete;
+    
+            try 
+            {
+                // Send packet using coroutine (WebGL-safe)
+                StartCoroutine(SendWithCallbackCoroutine(packet));
+            }
+            catch (Exception ex)
+            {
+                _pendingCallbacks.Remove(packet.Type);
+                Debug.LogError($"Send failed: {ex.Message}");
+                onComplete?.Invoke(false);
+            }
         }
 
-        
-        private async Task SendWebSocketPackageAsync(byte[] bytes)
+        private IEnumerator SendWithCallbackCoroutine<T>(T packet) where T : BaseNetworkPacket
         {
-            if (_webSocket != null && _webSocket.State == WebSocketState.Open)
+            // Send the packet
+            var sendTask = SendPacketInternalAsync(packet);
+            yield return new WaitUntil(() => sendTask.IsCompleted);
+    
+            if (sendTask.IsFaulted)
             {
-                await _webSocket.Send(bytes);
+                _pendingCallbacks.Remove(packet.Type);
+                Debug.LogError($"Send failed: {sendTask.Exception?.GetBaseException().Message}");
+                _pendingCallbacks[packet.Type]?.Invoke(false);
+                yield break;
             }
-            else
+    
+            // Start timeout coroutine
+            StartCoroutine(CallbackTimeoutCoroutine(packet.Type, 5f));
+        }
+
+        private IEnumerator CallbackTimeoutCoroutine(PacketType packetType, float timeout)
+        {
+            yield return new WaitForSeconds(timeout);
+    
+            // Check if callback is still pending (server never responded)
+            if (_pendingCallbacks.TryGetValue(packetType, out var callback))
             {
-                throw new InvalidOperationException("WebSocket is not connected. Cannot send message.");
+                _pendingCallbacks.Remove(packetType);
+                Debug.LogError($"{packetType} confirmation timed out");
+                callback?.Invoke(false); // Timeout = failure
             }
         }
+
+
+        // private IEnumerator TaskTimeoutCoroutine(PacketType packetType, float timeout, System.Action onTimeout)
+        // {
+        //     yield return new WaitForSeconds(timeout);
+        //     if (_pendingRequests.ContainsKey(packetType))
+        //     {
+        //         onTimeout?.Invoke();
+        //     }
+        // }
+        
+        private async Task SendPacketInternalAsync<T>(T packet) where T : BaseNetworkPacket
+        {
+            try
+            {
+                byte[] bytes = MessagePackSerializer.Serialize(packet);
+        
+                if (_webSocket != null && _webSocket.State == WebSocketState.Open)
+                {
+                    await _webSocket.Send(bytes);
+                }
+                else
+                {
+                    throw new InvalidOperationException("WebSocket is not connected. Cannot send message.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Serialization or send failed: {ex.Message}");
+                throw; // Re-throw so reliable version can handle it
+            }
+        }
+
 
         #endregion
 
@@ -307,13 +452,42 @@ namespace Core.WebSocket
             }
         }
 
+        // private void HandleServerResponse(byte[] data)
+        // {
+        //     var decoded = MessagePackSerializer.Deserialize<object[]>(data);
+        //     if (decoded != null && decoded.Length >= 3)
+        //     {
+        //         bool response = Convert.ToBoolean(decoded[2]);
+        //         OnServerResponse?.Invoke(response);
+        //     }
+        // }
+        
+        // SHARED: Handle server responses for both versions
         private void HandleServerResponse(byte[] data)
         {
+            Debug.Log("Receiving server response");
             var decoded = MessagePackSerializer.Deserialize<object[]>(data);
-            if (decoded != null && decoded.Length >= 3)
+
+            if (decoded != null && decoded.Length >= 4)
             {
                 bool response = Convert.ToBoolean(decoded[2]);
-                OnServerResponse?.Invoke(response);
+                PacketType originalPacketType = (PacketType)Convert.ToInt32(decoded[3]);
+
+                // // Handle TASK version
+                // if (_pendingRequests.TryGetValue(originalPacketType, out var tcs))
+                // {
+                //     tcs.SetResult(response);
+                //     _pendingRequests.Remove(originalPacketType);
+                //     Debug.Log($"[TASK] Resolved {originalPacketType} request with response: {response}");
+                // }
+        
+                // Handle CALLBACK version
+                if (_pendingCallbacks.TryGetValue(originalPacketType, out var callback))
+                {
+                    callback?.Invoke(response);
+                    _pendingCallbacks.Remove(originalPacketType);
+                    Debug.Log($"[CALLBACK] Resolved {originalPacketType} request with response: {response}");
+                }
             }
         }
 
@@ -355,5 +529,19 @@ namespace Core.WebSocket
         }
         
         #endregion
+        
+        private void LogPackageDebugInfo(BaseNetworkPacket package)
+        {
+            Debug.Log($"Sending package of type: {package.GetType().Name}");
+            Debug.Log($"Package contents: SenderId={package.SenderId}, Type={package.Type}");
+    
+            if (package is StringPacket chatData)
+            {
+                Debug.Log($"Chat text: {chatData.Text}");
+            }
+    
+            byte[] bytes = MessagePackSerializer.Serialize(package.GetType(), package);
+            Debug.Log($"Serialized bytes: [{string.Join(", ", bytes)}]");
+        }
     }
 }

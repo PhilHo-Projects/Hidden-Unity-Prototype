@@ -55,7 +55,7 @@ namespace Core.Chatroom
             FadeText(waitResponseMessage, true);
             
             //Debug.Log("Creating room... ");
-            WebSocketNetworkHandler.Instance.SendWebSocketPackage(createData);
+            WebSocketNetworkHandler.Instance.SendPacket(createData);
         }
 
         private void JoinRoom()
@@ -76,7 +76,7 @@ namespace Core.Chatroom
 
 
             //Debug.Log($"Attempting to join room: {roomId}");
-            WebSocketNetworkHandler.Instance.SendWebSocketPackage(joinData);
+            WebSocketNetworkHandler.Instance.SendPacket(joinData);
         }
         
         // this is pinged when we do return/exit out of this mode
@@ -93,7 +93,7 @@ namespace Core.Chatroom
             FadeText(waitResponseMessage, true);
 
             //Debug.Log($"Attempting to leave room: {roomId}");
-            WebSocketNetworkHandler.Instance.SendWebSocketPackage(leaveData);
+            WebSocketNetworkHandler.Instance.SendPacket(leaveData);
         }
         
         private void HandleServerResponse(bool serverResponse)

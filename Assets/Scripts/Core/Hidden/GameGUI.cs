@@ -26,10 +26,25 @@ namespace Core.Hidden
 
         [Header("Game Boards")] [SerializeField]
         private GameObject playerBoard;
+        
+        [SerializeField] private Button[] colorChoosingButtons = new Button[3];
+        [SerializeField] private float selectedScale = 1.1f;
+        [SerializeField] private float unselectedScale = 0.9f;
+        [SerializeField] private float animationDuration = 0.2f;
+        private int currentSelectedIndex = -1;
 
+        
+        
         [SerializeField] private GameObject opponentBoard;
         [SerializeField] private Image[] gridButtonImages = new Image[9];
         [SerializeField] private Image[] otherBoard = new Image[9];
+        [SerializeField] private Image[] borderButtonImages = new Image[3];
+        [SerializeField] private float trailIntensity = 3f;
+        [SerializeField] private float trailSpeed = 1f;
+        public Image[] OtherBoard => otherBoard;
+
+        private string _currentPaintColor;
+        public string CurrentPaintColor { get => _currentPaintColor; set => _currentPaintColor = value; }
 
         [Header("UI Text Elements")]
         [SerializeField] private TMP_Text countdownText;
@@ -54,21 +69,19 @@ namespace Core.Hidden
         public Image TimerFill => timerFill;
 
         [Header("Cursor")] [SerializeField] private Texture2D[] cursorTextures = new Texture2D[2];
+        
+        
 
         [Header("Animation Settings")] [SerializeField]
         private float fadeDuration = 0.5f;
 
         [SerializeField] private float slideDuration = 0.5f;
 
-        #endregion
-
-        #region Properties and References
-
         private GameManager _gameManager;
         private Vector2 _cursorHotspot;
 
         #endregion
-
+        
         #region Unity Lifecycle
 
         private void Awake()
@@ -99,6 +112,21 @@ namespace Core.Hidden
 
             Debug.Log(_gameManager.blindModeActive);
             if (_gameManager.blindModeActive == false) SetSideBySideView(false, true);
+            
+            for (int i = 0; i < colorChoosingButtons.Length; i++)
+            {
+                int buttonIndex = i;
+                colorChoosingButtons[i].onClick.AddListener(() => OnColorButtonClick(buttonIndex));
+            }
+            
+            // for (int i = 0; i < borderButtonImages.Length; i++)
+            // {
+            //     if (borderButtonImages[i] != null && borderButtonImages[i].material != null)
+            //     {
+            //         borderButtonImages[i].material.SetFloat("_TrailEnabled", 0f);
+            //         borderButtonImages[i].material.SetFloat("_TrailIntensity", 0f);
+            //     }
+            // }
         }
 
         #endregion
@@ -145,13 +173,7 @@ namespace Core.Hidden
             _gameManager.TextAnimations.PopText(announcementText, message, 0.15f, 0.1f, scaleAmount);
         }
 
-        public void UpdateCursor(int colorIndex)
-        {
-            if (colorIndex >= 0 && colorIndex < cursorTextures.Length)
-            {
-                Cursor.SetCursor(cursorTextures[colorIndex], _cursorHotspot, CursorMode.Auto);
-            }
-        }
+
 
         public void UpdateTimer(float currentTime, float totalTime)
         {
@@ -353,7 +375,9 @@ namespace Core.Hidden
             ResetGridColors();
             InitializeGUIPositions();
             ResetCursor();
-            countdownText.alpha = 1f; // why would the alpha not be 1f?...
+            countdownText.alpha = 1f;
+            ResetAllBorderTrails();
+
         }
         
         private void ResetGridColors()
@@ -369,6 +393,31 @@ namespace Core.Hidden
         {
             Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
         }
+        
+        public void ResetAllBorderTrails()
+        {
+            currentSelectedIndex = -1;
+    
+            // Reset button scales
+            for (int i = 0; i < colorChoosingButtons.Length; i++)
+            {
+                if (colorChoosingButtons[i] != null)
+                {
+                    colorChoosingButtons[i].transform
+                        .DOScale(1f, animationDuration)
+                        .SetEase(Ease.OutQuart);
+                }
+            }
+    
+            // Reset border materials
+            for (int i = 0; i < borderButtonImages.Length; i++)
+            {
+                if (borderButtonImages[i] != null && borderButtonImages[i].material != null)
+                {
+                    StopBorderTrail(borderButtonImages[i].material);
+                }
+            }
+        }
 
         public void ShowMatchFoundScreen(string message)
         {
@@ -379,6 +428,108 @@ namespace Core.Hidden
         #endregion
 
         #region Private Methods
+        
+        private void OnColorButtonClick(int colorIndex)
+        {
+            string selectedColor = "";
+            switch (colorIndex)
+            {
+                case 0:
+                    selectedColor = ColorGreenSelect;
+                    UpdateCursor(0);
+                    break;
+                case 1:
+                    selectedColor = ColorBlueSelect;
+                    UpdateCursor(1);
+                    break;
+                case 2:
+                    selectedColor = ColorRedSelect;
+                    UpdateCursor(2);
+                    break;
+            }
+            AnimateButtonSelection(colorIndex);
+
+            _currentPaintColor = selectedColor;
+        }
+        
+        private void UpdateCursor(int colorIndex)
+        {
+            if (colorIndex >= 0 && colorIndex < cursorTextures.Length)
+            {
+                Cursor.SetCursor(cursorTextures[colorIndex], _cursorHotspot, CursorMode.Auto);
+            }
+        }
+        
+        public void ResetAllButtonStates()
+        {
+            currentSelectedIndex = -1;
+    
+            for (int i = 0; i < colorChoosingButtons.Length; i++)
+            {
+                if (colorChoosingButtons[i] != null)
+                {
+                    colorChoosingButtons[i].transform
+                        .DOScale(1f, animationDuration)
+                        .SetEase(Ease.OutQuart);
+                }
+            }
+        }
+        
+        private void AnimateButtonSelection(int selectedIndex)
+        {
+            currentSelectedIndex = selectedIndex;
+
+            for (int i = 0; i < colorChoosingButtons.Length; i++)
+            {
+                if (colorChoosingButtons[i] != null)
+                {
+                    // Scale animation (existing)
+                    float targetScale = (i == selectedIndex) ? selectedScale : unselectedScale;
+                    colorChoosingButtons[i].transform
+                        .DOScale(targetScale, animationDuration)
+                        .SetEase(Ease.OutBack);
+
+                    // NEW: Border trail animation
+                    if (i < borderButtonImages.Length && borderButtonImages[i] != null)
+                    {
+                        Material borderMat = borderButtonImages[i].material;
+                        if (borderMat != null)
+                        {
+                            if (i == selectedIndex)
+                            {
+                                // Enable and start trail for selected button
+                                StartBorderTrail(borderMat);
+                            }
+                            else
+                            {
+                                // Disable trail for unselected buttons
+                                StopBorderTrail(borderMat);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private void StartBorderTrail(Material borderMaterial)
+        {
+            // Enable the trail
+            borderMaterial.SetFloat("_TrailEnabled", 1f);
+    
+            // Animate intensity from 0 to target value for smooth fade-in
+            borderMaterial.DOFloat(trailIntensity, "_TrailIntensity", animationDuration * 0.5f)
+                .SetEase(Ease.OutQuart);
+        }
+
+        private void StopBorderTrail(Material borderMaterial)
+        {
+            // Fade out intensity, then disable
+            borderMaterial.DOFloat(0f, "_TrailIntensity", animationDuration * 0.5f)
+                .SetEase(Ease.OutQuart)
+                .OnComplete(() => {
+                    borderMaterial.SetFloat("_TrailEnabled", 0f);
+                });
+        }
         
         private void InitializeGUIPositions()
         {

@@ -19,10 +19,10 @@ namespace Core.Hidden
         [SerializeField] private GameGUI gameGUI;
         
         [SerializeField] private Button[] gridButtons = new Button[9];
-        [SerializeField] private Button[] colorChoosingButtons = new Button[3];
+        // [SerializeField] private Button[] colorChoosingButtons = new Button[3];
 
         [SerializeField] private Image[] gridButtonImages = new Image[9];
-        [SerializeField] private Image[] otherBoard = new Image[9];
+        //[SerializeField] private Image[] otherBoard = new Image[9];
         
         [SerializeField] private Button readyButtonAI;
         [SerializeField] private Button readyButton;
@@ -51,7 +51,7 @@ namespace Core.Hidden
         // Grid data
         private GridData _playerGrid;
         private GridData _opponentGrid;
-        private string _currentPaintColor;
+        //private string _currentPaintColor;
         private int _currentRound;
         private int _totalTurns;
         private int _maxTurns;
@@ -106,7 +106,8 @@ namespace Core.Hidden
             _totalTurns = 0;
             _maxTurns = _numberOfRounds * 2;
             _turnTimer = _gameManager.timer;
-            _currentPaintColor = "";
+            // _currentPaintColor = "";
+            gameGUI.CurrentPaintColor = "";
             InitializeGrids();
             powerUps.InitializePowerups();
         }
@@ -189,12 +190,6 @@ namespace Core.Hidden
             readyButton.onClick.AddListener(Ready);
             replayButton.onClick.AddListener(ResetGame);
 
-            for (int i = 0; i < colorChoosingButtons.Length; i++)
-            {
-                int buttonIndex = i;
-                colorChoosingButtons[i].onClick.AddListener(() => OnColorButtonClick(buttonIndex));
-            }
-
             for (int i = 0; i < gridButtons.Length; i++)
             {
                 int buttonIndex = i;
@@ -206,26 +201,26 @@ namespace Core.Hidden
 
         #region Game Visuals
 
-        private void OnColorButtonClick(int colorIndex)
-        {
-            string selectedColor = "";
-            switch (colorIndex)
-            {
-                case 0:
-                    selectedColor = ColorGreenSelect;
-                    gameGUI.UpdateCursor(0);
-                    break;
-                case 1:
-                    selectedColor = ColorBlueSelect;
-                    gameGUI.UpdateCursor(1);
-                    break;
-                case 2:
-                    selectedColor = ColorRedSelect;
-                    gameGUI.UpdateCursor(2);
-                    break;
-            }
-            _currentPaintColor = selectedColor;
-        }
+        // private void OnColorButtonClick(int colorIndex)
+        // {
+        //     string selectedColor = "";
+        //     switch (colorIndex)
+        //     {
+        //         case 0:
+        //             selectedColor = ColorGreenSelect;
+        //             gameGUI.UpdateCursor(0);
+        //             break;
+        //         case 1:
+        //             selectedColor = ColorBlueSelect;
+        //             gameGUI.UpdateCursor(1);
+        //             break;
+        //         case 2:
+        //             selectedColor = ColorRedSelect;
+        //             gameGUI.UpdateCursor(2);
+        //             break;
+        //     }
+        //     gameGUI.CurrentPaintColor = selectedColor;
+        // }
 
         #endregion
         
@@ -248,9 +243,9 @@ namespace Core.Hidden
                 return;
             }
 
-            if (!string.IsNullOrEmpty(_currentPaintColor) && _isMyTurn)
+            if (!string.IsNullOrEmpty(gameGUI.CurrentPaintColor) && _isMyTurn)
             {
-                ApplyMove(buttonIndex, _currentPaintColor);
+                ApplyMove(buttonIndex, gameGUI.CurrentPaintColor);
             }
         }
 
@@ -263,7 +258,8 @@ namespace Core.Hidden
             _playerGrid.Color[position] = color;
     
             gameGUI.ChangeButtonColor(position, color);
-            _currentPaintColor = "";
+            gameGUI.ResetAllButtonStates();
+            gameGUI.CurrentPaintColor = "";
             gameGUI.ResetCursor();
             powerUps.ResetBluePowerUp();
     
@@ -437,7 +433,8 @@ namespace Core.Hidden
         {
             _opponentGrid.Marks[position] = true;
             _opponentGrid.Color[position] = opponentColor;
-            otherBoard[position].color = GetColorFromHex(opponentColor);
+            //otherBoard[position].color = GetColorFromHex(opponentColor);
+            gameGUI.OtherBoard[position].color = GetColorFromHex(opponentColor);
 
             if (_playerGrid.Marks[position])
             {
@@ -499,7 +496,7 @@ namespace Core.Hidden
         private IEnumerator AnimatePieceClearing(int position, bool clearPlayer1, bool clearPlayer2)
         {
             // Determine which transform to use for the VFX
-            Transform effectTransform = clearPlayer1 ? gridButtonImages[position].transform : otherBoard[position].transform;
+            Transform effectTransform = clearPlayer1 ? gridButtonImages[position].transform : gameGUI.OtherBoard[position].transform;
 
             // Play the effect only if it's not clearPlayer2
             if (clearPlayer1)
@@ -517,7 +514,7 @@ namespace Core.Hidden
     
             // Get initial colors
             Color startColor1 = gridButtonImages[position].color;
-            Color startColor2 = otherBoard[position].color;
+            Color startColor2 = gameGUI.OtherBoard[position].color;
             Color targetColor = Color.white;
     
             // Animate fading to white
@@ -527,7 +524,7 @@ namespace Core.Hidden
                 float progress = elapsedTime / duration;
 
                 if (clearPlayer1) gridButtonImages[position].color = Color.Lerp(startColor1, targetColor, progress);
-                if (clearPlayer2) otherBoard[position].color = Color.Lerp(startColor2, targetColor, progress);
+                if (clearPlayer2) gameGUI.OtherBoard[position].color = Color.Lerp(startColor2, targetColor, progress);
 
                 yield return null;
             }
@@ -566,7 +563,7 @@ namespace Core.Hidden
             }
             else
             {
-                otherBoard[position].color = whiteColor;
+                gameGUI.OtherBoard[position].color = whiteColor;
                 _opponentGrid.Marks[position] = false;
                 _opponentGrid.Color[position] = "";
             }
@@ -626,7 +623,7 @@ namespace Core.Hidden
         private IEnumerator ArtificialOpponent()
         {
             yield return new WaitForSeconds(0.5f);
-            int movePosition = _ai.SimulateOpponentMove(_opponentGrid, otherBoard);
+            int movePosition = _ai.SimulateOpponentMove(_opponentGrid, gameGUI.OtherBoard);
     
             if (movePosition >= 0)
             {

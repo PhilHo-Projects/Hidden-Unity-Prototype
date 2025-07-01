@@ -47,7 +47,7 @@ namespace Core.WebSocket
                 };
     
                 _lastSentPositions[objectId] = position;
-                _wsHandler.SendWebSocketPackage(positionMessageVector);
+                _wsHandler.SendPacket(positionMessageVector);
             }
         }
 

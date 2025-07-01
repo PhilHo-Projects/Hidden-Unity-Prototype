@@ -24,6 +24,21 @@ var defaultWidth = 16;
 var defaultHeight = 9;
 var canvasAspect = defaultWidth / defaultHeight;
 
+const debouncedResize = debounce(resizeGame, 16); // ~60fps
+
+
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 function resizeGame() {
   // Get the actual viewport dimensions (excludes browser UI elements)
   var windowWidth = window.innerWidth;
@@ -174,7 +189,6 @@ document.addEventListener('DOMContentLoaded', function() {
           
           // Calculate new zoom level
           if (initialDistance > 0) {
-            // Calculate zoom factor based on this specific movement
             const newZoom = currentZoom * (currentDistance / initialDistance);
             currentZoom = Math.min(Math.max(newZoom, minZoom), maxZoom);
             
@@ -185,19 +199,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const midX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
             const midY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
             
-            // Calculate canvas center
             const canvasRect = canvas.getBoundingClientRect();
             const canvasCenterX = canvasRect.left + canvasRect.width / 2;
             const canvasCenterY = canvasRect.top + canvasRect.height / 2;
             
-            // Adjust canvas position based on zoom center
             const offsetX = (midX - canvasCenterX) * (1 - currentZoom);
             const offsetY = (midY - canvasCenterY) * (1 - currentZoom);
             
-            // Update transform with translation
             canvas.style.transform = `scale(${currentZoom}) translate(${offsetX/currentZoom}px, ${offsetY/currentZoom}px)`;
             
-            // Prevent default behavior (page zoom)
+            // **ADD THIS LINE** - Update canvas sizing in real-time
+            debouncedResize();
+            
             e.preventDefault();
           }
         }

@@ -127,7 +127,7 @@ namespace Core.PongGame
             };
 
             Debug.Log(" did i really join?");
-            WebSocketNetworkHandler.Instance.SendWebSocketPackage(joinData);
+            WebSocketNetworkHandler.Instance.SendPacket(joinData);
         }
         private PongPhysics InitializePhysics()
         {
@@ -279,7 +279,7 @@ namespace Core.PongGame
                 Type = PacketType.RoomLeave,
                 Text = "pongRoom"
             };
-            WebSocketNetworkHandler.Instance.SendWebSocketPackage(leaveData);
+            WebSocketNetworkHandler.Instance.SendPacket(leaveData);
             
             InputManager.Instance.InputActionHandlers["Move"].Performed -= DetectInput;
             InputManager.Instance.InputActionHandlers["Move"].Canceled -= DetectInput;

@@ -34,7 +34,7 @@ namespace Core.Hidden
                 Type = PacketType.HiddenGameConfirmStart,
                 Response = isReady
             };
-            _wsHandler.SendWebSocketPackage(isReadyPacket);
+            _wsHandler.SendPacket(isReadyPacket);
         }
 
         public void SendMove(int index, string colorBeforeResolution)
@@ -45,7 +45,7 @@ namespace Core.Hidden
                 Index = (byte)index,
                 SquareColor = colorBeforeResolution
             };
-            _wsHandler.SendWebSocketPackage(createData);
+            _wsHandler.SendPacket(createData);
         }
         
         public void SendMoves(List<int> indices, List<string> colors)
@@ -63,7 +63,7 @@ namespace Core.Hidden
                 Colors = colors.ToArray()
             };
     
-            _wsHandler.SendWebSocketPackage(createData);
+            _wsHandler.SendPacket(createData);
         }
 
         public void SendImmuneStatus(byte index)
@@ -78,7 +78,7 @@ namespace Core.Hidden
                 Type = PacketType.HiddenGameImmune,
                 Index = indexes
             };
-            _wsHandler.SendWebSocketPackage(immunePacket);
+            _wsHandler.SendPacket(immunePacket);
         }
 
 
