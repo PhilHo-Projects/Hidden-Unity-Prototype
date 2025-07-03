@@ -119,14 +119,13 @@ namespace Core.Hidden
                 colorChoosingButtons[i].onClick.AddListener(() => OnColorButtonClick(buttonIndex));
             }
             
-            // for (int i = 0; i < borderButtonImages.Length; i++)
-            // {
-            //     if (borderButtonImages[i] != null && borderButtonImages[i].material != null)
-            //     {
-            //         borderButtonImages[i].material.SetFloat("_TrailEnabled", 0f);
-            //         borderButtonImages[i].material.SetFloat("_TrailIntensity", 0f);
-            //     }
-            // }
+            for (int i = 0; i < borderButtonImages.Length; i++)
+            {
+                if (borderButtonImages[i] != null && borderButtonImages[i].material != null)
+                {
+                    borderButtonImages[i].material.SetFloat("_TrailEnabled", 0f);
+                }
+            }
         }
 
         #endregion
@@ -431,6 +430,7 @@ namespace Core.Hidden
         
         private void OnColorButtonClick(int colorIndex)
         {
+            Debug.Log("clicked");
             string selectedColor = "";
             switch (colorIndex)
             {
