@@ -15,7 +15,7 @@ namespace Core.WebSocket
         // ## Constants
         private const string ServerUrlHttPs = "wss://sargaz.popnux.com/ws";
         private const string ServerUrlHttp = "ws://18.226.150.199:8080"; 
-        private const string ServerUrlUbuntu = "wss://philippeho.popnux.com:8080";
+        private const string ServerUrlUbuntu = "wss://philippeho.popnux.com/ws";
         private const string ServerUrlLocal = "ws://localhost:8080";
 
         // ## Core Components
