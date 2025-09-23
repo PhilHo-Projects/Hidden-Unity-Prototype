@@ -24,13 +24,17 @@ namespace Core
         [Header("Online Screen Elements")]
         [SerializeField] private TMP_InputField userInputField;
         [SerializeField] private Image usernameTextBackground;
+        [SerializeField] private Image selectGameBackground;
         [SerializeField] private TMP_Text usernameText;
         [SerializeField] private TMP_Text errorText;
         [SerializeField] private Button confirmNameButton;
         [SerializeField] private Button randomizeNameButton;
-        [SerializeField] private Button websocketChatButton;
-        [SerializeField] private Button pongGameButton;
-        [SerializeField] private Button vinceGameButton;
+        
+        [SerializeField] private Button[] gameButtons;
+
+        // [SerializeField] private Button websocketChatButton;
+        // [SerializeField] private Button pongGameButton;
+        // [SerializeField] private Button vinceGameButton;
         [SerializeField] private TMP_InputField[] userInputParameter;
 
         [Header("Offline Screen Elements")]
@@ -65,28 +69,20 @@ namespace Core
             backButton.onClick.AddListener(HandleBackButton);
             confirmNameButton.onClick.AddListener(HandleConfirmName);
             randomizeNameButton.onClick.AddListener(RandomizeName);
-            
-            websocketChatButton.onClick.AddListener(() => ConnectToWebsocket("ChatRoom"));
-            pongGameButton.onClick.AddListener(() => ConnectToWebsocket("Pong"));
 
-            //vinceGameButton.onClick.AddListener(() => ConnectToWebsocket("HiddenGame"));
-            
-            // vinceGameButton.onClick.AddListener(() => {
-            //     GameManager.Instance.isOnline = true;
-            //     GameManager.Instance.blindModeActive = true;
-            //     GameManager.Instance.playingAgainstAI = false;
-            //     WebSocketNetworkHandler.Instance.Connect();
-            //     ConnectWithRetriesTaskVersion("HiddenGame");
-            // });
 
-            
-            vinceGameButton.onClick.AddListener(() => {
+            gameButtons[0].onClick.AddListener(() => {
                 GameManager.Instance.isOnline = true;
                 GameManager.Instance.blindModeActive = true;
                 GameManager.Instance.playingAgainstAI = false;
                 WebSocketNetworkHandler.Instance.Connect();
                 StartCoroutine(ConnectWithRetriesCallbackVersion("HiddenGame"));
             });
+            
+            //gameButtons[1].onClick.AddListener(() => ConnectToWebsocket("ChatRoom"));
+            
+            //websocketChatButton.onClick.AddListener(() => ConnectToWebsocket("ChatRoom"));
+
 
             
             offlineScene.onClick.AddListener(() => SceneLoader.Instance.LoadScene("OfflinePrototype"));
@@ -120,9 +116,12 @@ namespace Core
             usernameText.gameObject.SetActive(true);
             
             // Hide game options until name is confirmed
-            websocketChatButton.gameObject.SetActive(false);
+            selectGameBackground.gameObject.SetActive(false);
+            foreach(var b in gameButtons) b.gameObject.SetActive(false);
+
+            //websocketChatButton.gameObject.SetActive(false);
             //pongGameButton.gameObject.SetActive(false);
-            vinceGameButton.gameObject.SetActive(false);
+            //vinceGameButton.gameObject.SetActive(false);
         }
         
         private void ShowOfflineScreen()
@@ -142,10 +141,12 @@ namespace Core
             userInputField.gameObject.SetActive(true);
             confirmNameButton.gameObject.SetActive(true);
             randomizeNameButton.gameObject.SetActive(true);
+
+            foreach(var b in gameButtons) b.gameObject.SetActive(false);
             
-            websocketChatButton.gameObject.SetActive(false);
-            //pongGameButton.gameObject.SetActive(false);
-            vinceGameButton.gameObject.SetActive(false);
+            // websocketChatButton.gameObject.SetActive(false);
+            // //pongGameButton.gameObject.SetActive(false);
+            // vinceGameButton.gameObject.SetActive(false);
     
             ShowWelcomeScreen();
         }
@@ -167,13 +168,16 @@ namespace Core
                 
                 // Show game options
                 usernameText.text = $"Username: {newUsername}";
-                websocketChatButton.gameObject.SetActive(true);
+                selectGameBackground.gameObject.SetActive(true);
+                foreach(var b in gameButtons) b.gameObject.SetActive(true);
+
+                //websocketChatButton.gameObject.SetActive(true);
                 //pongGameButton.gameObject.SetActive(true);
-                vinceGameButton.gameObject.SetActive(true);
+                //vinceGameButton.gameObject.SetActive(true);
             }
             else
             {
-                GameManager.Instance.TextAnimations.PopText(errorText, "Please enter a username!");
+                GameManager.Instance.DoTweenAnimations.PopText(errorText, "Please enter a username!");
             }
         }
 
@@ -266,7 +270,7 @@ namespace Core
             }
             else
             {
-                GameManager.Instance.TextAnimations.PopText(errorText, "Failed to connect to server after multiple attempts!");
+                GameManager.Instance.DoTweenAnimations.PopText(errorText, "Failed to connect to server after multiple attempts!");
             }
         }
         
@@ -319,7 +323,7 @@ namespace Core
         //             if (!usernameAccepted)
         //             {
         //                 Debug.LogError("Username rejected or timed out (TASK METHOD)");
-        //                 GameManager.Instance.TextAnimations.PopText(errorText, "Username failed (TASK)");
+        //                 GameManager.Instance.DoTweenAnimations.PopText(errorText, "Username failed (TASK)");
         //                 return;
         //             }
         //
@@ -338,7 +342,7 @@ namespace Core
         //             if (!lobbyJoined)
         //             {
         //                 Debug.LogError("Failed to join lobby (TASK METHOD)");
-        //                 GameManager.Instance.TextAnimations.PopText(errorText, "Lobby join failed (TASK)");
+        //                 GameManager.Instance.DoTweenAnimations.PopText(errorText, "Lobby join failed (TASK)");
         //                 return;
         //             }
         //
@@ -348,12 +352,12 @@ namespace Core
         //         catch (Exception ex)
         //         {
         //             Debug.LogError($"Task-based connection failed: {ex.Message}");
-        //             GameManager.Instance.TextAnimations.PopText(errorText, "Task method crashed!");
+        //             GameManager.Instance.DoTweenAnimations.PopText(errorText, "Task method crashed!");
         //         }
         //     }
         //     else
         //     {
-        //         GameManager.Instance.TextAnimations.PopText(errorText, "Failed to connect to server after multiple attempts!");
+        //         GameManager.Instance.DoTweenAnimations.PopText(errorText, "Failed to connect to server after multiple attempts!");
         //     }
         // }
         
@@ -401,11 +405,11 @@ namespace Core
                     Text = _savedUsername
                 };
 
-                Debug.Log("Sending username with CALLBACK method...");
+                //Debug.Log("Sending username with CALLBACK method...");
                 WebSocketNetworkHandler.Instance.SendPacketReliableWithCallbacks(usernamePacket, (success) => {
                     usernameSuccess = success;
                     usernameProcessed = true;
-                    Debug.Log($"Username callback result: {success}");
+                    //Debug.Log($"Username callback result: {success}");
                 });
 
                 // Wait for username response
@@ -413,12 +417,12 @@ namespace Core
 
                 if (!usernameSuccess)
                 {
-                    Debug.LogError("Username rejected or timed out (CALLBACK METHOD)");
-                    GameManager.Instance.TextAnimations.PopText(errorText, "Username failed (CALLBACK)");
+                    //Debug.LogError("Username rejected or timed out (CALLBACK METHOD)");
+                    GameManager.Instance.DoTweenAnimations.PopText(errorText, "Username failed (CALLBACK)");
                     yield break;
                 }
 
-                Debug.Log("Username accepted by server (CALLBACK METHOD)");
+                //Debug.Log("Username accepted by server (CALLBACK METHOD)");
 
                 // Test 2: Join lobby with callback-based reliable method
                 bool lobbyProcessed = false;
@@ -430,11 +434,11 @@ namespace Core
                     Text = "lobbyRoom"
                 };
 
-                Debug.Log("Joining lobby with CALLBACK method...");
+                //Debug.Log("Joining lobby with CALLBACK method...");
                 WebSocketNetworkHandler.Instance.SendPacketReliableWithCallbacks(lobbyPacket, (success) => {
                     lobbySuccess = success;
                     lobbyProcessed = true;
-                    Debug.Log($"Lobby callback result: {success}");
+                    //Debug.Log($"Lobby callback result: {success}");
                 });
 
                 // Wait for lobby response
@@ -442,17 +446,17 @@ namespace Core
 
                 if (!lobbySuccess)
                 {
-                    Debug.LogError("Failed to join lobby (CALLBACK METHOD)");
-                    GameManager.Instance.TextAnimations.PopText(errorText, "Lobby join failed (CALLBACK)");
+                    //Debug.LogError("Failed to join lobby (CALLBACK METHOD)");
+                    GameManager.Instance.DoTweenAnimations.PopText(errorText, "Lobby join failed (CALLBACK)");
                     yield break;
                 }
 
-                Debug.Log("Lobby joined successfully (CALLBACK METHOD)");
+                //Debug.Log("Lobby joined successfully (CALLBACK METHOD)");
                 SceneLoader.Instance.LoadScene(sceneName);
             }
             else
             {
-                GameManager.Instance.TextAnimations.PopText(errorText, "Failed to connect to server after multiple attempts!");
+                GameManager.Instance.DoTweenAnimations.PopText(errorText, "Failed to connect to server after multiple attempts!");
             }
         }
 
@@ -487,9 +491,11 @@ namespace Core
         {
             onlineButton.onClick.RemoveAllListeners();
             offlineButton.onClick.RemoveAllListeners();
-            websocketChatButton.onClick.RemoveAllListeners();
-            pongGameButton.onClick.RemoveAllListeners();
-            vinceGameButton.onClick.RemoveAllListeners();
+            foreach(var b in gameButtons) b.onClick.RemoveAllListeners();
+            // websocketChatButton.onClick.RemoveAllListeners();
+            // pongGameButton.onClick.RemoveAllListeners();
+            // vinceGameButton.onClick.RemoveAllListeners();
+            // gameButtons.onClick.RemoveAllListeners();
             offlineScene.onClick.RemoveAllListeners();
             offlineVinceGame.onClick.RemoveAllListeners();
             backButton.onClick.RemoveAllListeners();

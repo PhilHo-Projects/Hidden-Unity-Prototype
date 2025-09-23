@@ -36,6 +36,10 @@ namespace Core.Hidden
         public const string ColorGreenSelect = "#A6E22E";
         public const string ColorBlueSelect = "#4591DB";
         public const string ColorRedSelect = "#CC3941";
+        
+        public static Color ColorYellowBlinker => GetColorFromHex("#D7AF13");
+        public static Color ColorRedBlinker => GetColorFromHex("#FF6265");
+        
 
         public static readonly Vector3 CenterPosition = new Vector3(0, 0, 0);
         public static readonly Vector3 LeftPosition = new Vector3(-450, 0, 0);

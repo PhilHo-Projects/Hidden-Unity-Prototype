@@ -101,7 +101,7 @@ namespace Core.WebSocket
                  _webSocket.State == WebSocketState.Connecting || 
                  _isConnecting))
             {
-                Debug.Log("Already connected or connecting. Ignoring connection request.");
+                //Debug.Log("Already connected or connecting. Ignoring connection request.");
                 return;
             }
 
@@ -465,7 +465,7 @@ namespace Core.WebSocket
         // SHARED: Handle server responses for both versions
         private void HandleServerResponse(byte[] data)
         {
-            Debug.Log("Receiving server response");
+            //Debug.Log("Receiving server response");
             var decoded = MessagePackSerializer.Deserialize<object[]>(data);
 
             if (decoded != null && decoded.Length >= 4)
@@ -486,7 +486,7 @@ namespace Core.WebSocket
                 {
                     callback?.Invoke(response);
                     _pendingCallbacks.Remove(originalPacketType);
-                    Debug.Log($"[CALLBACK] Resolved {originalPacketType} request with response: {response}");
+                    //Debug.Log($"[CALLBACK] Resolved {originalPacketType} request with response: {response}");
                 }
             }
         }

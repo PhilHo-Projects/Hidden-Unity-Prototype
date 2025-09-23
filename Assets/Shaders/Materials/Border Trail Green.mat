@@ -30,7 +30,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _TrailEnabled: 0
-    - _TrailIntensity: 3
+    - _TrailIntensity: 0
     - _TrailLength: 0.3
     - _TrailSharpness: 3
     - _TrailSpeed: 1

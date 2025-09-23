@@ -116,14 +116,14 @@ namespace Core.Hidden
             hiddenMain.ShieldSelectionMode = true;
             _greenPowerupUsed = true;
 
-            _gameManager.TextAnimations.RainbowText("Shield used", specialUsedText);
+            _gameManager.DoTweenAnimations.RainbowText("Shield used", specialUsedText);
         }
 
         public void ShieldPieces(bool isOnline, GridData playerGrid)
         {
             if (_greenPowerupUsed) return;
 
-            _gameManager.TextAnimations.RainbowText("Shield used", specialUsedText);
+            _gameManager.DoTweenAnimations.RainbowText("Shield used", specialUsedText);
 
             StartCoroutine(DeactivatePowerupUI(0));
             _greenPowerupUsed = true;
@@ -145,7 +145,7 @@ namespace Core.Hidden
 
         public void ShieldOpponentPieces(GridData opponentGrid, byte[] indexes)
         {
-            _gameManager.TextAnimations.RainbowText("Opponent used shield!!", specialUsedText);
+            _gameManager.DoTweenAnimations.RainbowText("Opponent used shield!!", specialUsedText);
     
             foreach (byte index in indexes)
             {
@@ -180,7 +180,7 @@ namespace Core.Hidden
         {
             if (_bluePowerupUsed || !IsPlayerTurn) return;
     
-            _gameManager.TextAnimations.RainbowText("Reveal board used", specialUsedText);
+            _gameManager.DoTweenAnimations.RainbowText("Reveal board used", specialUsedText);
             StartCoroutine(DeactivatePowerupUI(1));
             gameGUI.SetSideBySideView(true);
             _bluePowerupUsed = true;
@@ -199,7 +199,7 @@ namespace Core.Hidden
         {
             if (_redPowerupUsed || !IsPlayerTurn) return;
             redPowerActivated = true;
-            _gameManager.TextAnimations.RainbowText("Extra turn activated!", specialUsedText);
+            _gameManager.DoTweenAnimations.RainbowText("Extra turn activated!", specialUsedText);
             StartCoroutine(DeactivatePowerupUI(2));
             _redPowerupUsed = true;
         }
@@ -208,7 +208,7 @@ namespace Core.Hidden
         {
             if (_redPowerupUsed)
             {
-                _gameManager.TextAnimations.RainbowText("Extra turn applied!", specialUsedText);
+                _gameManager.DoTweenAnimations.RainbowText("Extra turn applied!", specialUsedText);
                 _redPowerupUsed = false;
             }
         }

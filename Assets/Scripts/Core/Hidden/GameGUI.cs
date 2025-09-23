@@ -28,19 +28,18 @@ namespace Core.Hidden
         private GameObject playerBoard;
         
         [SerializeField] private Button[] colorChoosingButtons = new Button[3];
+        [SerializeField] private Button[] setupSelectionButtons = new Button[3];
         [SerializeField] private float selectedScale = 1.1f;
         [SerializeField] private float unselectedScale = 0.9f;
         [SerializeField] private float animationDuration = 0.2f;
         private int currentSelectedIndex = -1;
-
-        
         
         [SerializeField] private GameObject opponentBoard;
         [SerializeField] private Image[] gridButtonImages = new Image[9];
         [SerializeField] private Image[] otherBoard = new Image[9];
         [SerializeField] private Image[] borderButtonImages = new Image[3];
         [SerializeField] private float trailIntensity = 3f;
-        [SerializeField] private float trailSpeed = 1f;
+        //[SerializeField] private float trailSpeed = 1f;
         public Image[] OtherBoard => otherBoard;
 
         private string _currentPaintColor;
@@ -110,7 +109,6 @@ namespace Core.Hidden
             InitializeCursor();
             InitializeGUIPositions();
 
-            Debug.Log(_gameManager.blindModeActive);
             if (_gameManager.blindModeActive == false) SetSideBySideView(false, true);
             
             for (int i = 0; i < colorChoosingButtons.Length; i++)
@@ -156,10 +154,10 @@ namespace Core.Hidden
         public void UpdateTurnIndicators(bool isMyTurn)
         {
             playerTurnText.text = isMyTurn ? "Your Turn" : "Waiting...";
-            _gameManager.TextAnimations.PopThenBreathe(playerTurnText.transform);
+            _gameManager.DoTweenAnimations.PopThenBreathe(playerTurnText.transform);
 
             opponentTurnText.text = isMyTurn ? "Waiting..." : "Their Turn";
-            _gameManager.TextAnimations.PopThenBreathe(opponentTurnText.transform);
+            _gameManager.DoTweenAnimations.PopThenBreathe(opponentTurnText.transform);
         }
 
         public void UpdateRoundText(int currentRound)
@@ -169,19 +167,19 @@ namespace Core.Hidden
 
         public void ShowAnnouncement(string message, float scaleAmount = 1.15f)
         {
-            _gameManager.TextAnimations.PopText(announcementText, message, 0.15f, 0.1f, scaleAmount);
+            _gameManager.DoTweenAnimations.PopText(announcementText, message, 0.15f, 0.1f, scaleAmount);
         }
 
 
 
         public void UpdateTimer(float currentTime, float totalTime)
         {
-            _gameManager.TextAnimations.UpdateTimerWithEffects(timerFill, currentTime, totalTime);
+            _gameManager.DoTweenAnimations.UpdateTimerWithEffects(timerFill, currentTime, totalTime);
         }
 
         public void ResetTimerVisuals()
         {
-            _gameManager.TextAnimations.ResetTimerVisuals(timerFill);
+            _gameManager.DoTweenAnimations.ResetTimerVisuals(timerFill);
         }
 
         public GameState StateChange(GameState state, bool shouldLerp = true)
@@ -221,12 +219,32 @@ namespace Core.Hidden
                     TransitionCanvas(battleCanvasGroup, false, false);
                     LerpCanvasGroup(playerBoardCanvasGroup, 0f);
                     LerpCanvasGroup(opponentBoardCanvasGroup, 0f);
-                    _gameManager.TextAnimations.Typewriter(playAgainText, " Again?");
+                    _gameManager.DoTweenAnimations.Typewriter(playAgainText, " Again?");
                     break;
             }
             
             return state;
+        }
 
+        public void SubSetupCanvas(string options)
+        {
+            switch (options)
+            {
+                case "QuickMatch":
+                    MoveOptionsMenu(); 
+                    break;
+                case "Chat":
+                    MoveOptionsMenu(); 
+                    break;
+                case "Lobbies":
+                    MoveOptionsMenu(); 
+                    break;
+            }
+        }
+
+        private void MoveOptionsMenu()
+        {
+            
         }
 
         public void SetSideBySideView(bool animate = false, bool permanent = false)
@@ -309,7 +327,7 @@ namespace Core.Hidden
             playerScoreText.text = $"Your Score: {playerScore}";
             opponentScoreText.text = $"Opponent Score: {opponentScore}";
 
-            _gameManager.TextAnimations.CreateBreathingAnimation(gameOverText.transform);
+            _gameManager.DoTweenAnimations.CreateBreathingAnimation(gameOverText.transform);
         }
         
         public void ShowReadyScreen()
@@ -320,7 +338,7 @@ namespace Core.Hidden
         
         public void UpdateReadyText(string message)
         {
-            _gameManager.TextAnimations.Typewriter(countdownText, message);
+            _gameManager.DoTweenAnimations.Typewriter(countdownText, message);
         }
         
         public void ShowShieldVisual(int position, bool isOpponent = false)
@@ -357,7 +375,7 @@ namespace Core.Hidden
         {
             float totalAnimationTime = countdownStrings.Length * (0.3f + 0.4f + 0.3f);
 
-            _gameManager.TextAnimations.Countdown(
+            _gameManager.DoTweenAnimations.Countdown(
                 countdownText, 
                 countdownStrings,
                 fadeInDuration: 0.3f, 
@@ -422,7 +440,7 @@ namespace Core.Hidden
         {
             LerpCanvasGroup(mainPage, 0);
             LerpCanvasGroup(readyPage, 1);
-            _gameManager.TextAnimations.Typewriter(GetText(TMPTextType.Countdown), message);
+            _gameManager.DoTweenAnimations.Typewriter(GetText(TMPTextType.Countdown), message);
         }
         #endregion
 
@@ -430,7 +448,6 @@ namespace Core.Hidden
         
         private void OnColorButtonClick(int colorIndex)
         {
-            Debug.Log("clicked");
             string selectedColor = "";
             switch (colorIndex)
             {
@@ -474,6 +491,25 @@ namespace Core.Hidden
                 }
             }
         }
+        
+        public void ResetAllBorderAnimations()
+        {
+            for (int i = 0; i < borderButtonImages.Length; i++)
+            {
+                if (borderButtonImages[i] != null)
+                {
+                    Material borderMat = borderButtonImages[i].material;
+                    if (borderMat != null)
+                    {
+                        StopBorderTrail(borderMat);
+                    }
+                }
+            }
+    
+            // Reset the current selected index to indicate no selection
+            currentSelectedIndex = -1;
+        }
+
         
         private void AnimateButtonSelection(int selectedIndex)
         {
@@ -597,7 +633,7 @@ namespace Core.Hidden
             if (shieldImage == null) return;
         
             // Call the animation from the animation manager
-            _gameManager.TextAnimations.ShieldBouncyAppearance(shieldImage.transform);
+            _gameManager.DoTweenAnimations.ShieldBouncyAppearance(shieldImage.transform);
         }
         
         private void AnimateShieldDisappearance(Image shieldImage)
@@ -605,7 +641,7 @@ namespace Core.Hidden
             if (shieldImage == null)
                 return;
         
-            _gameManager.TextAnimations.ShieldBouncyDisappearance(shieldImage.transform);
+            _gameManager.DoTweenAnimations.ShieldBouncyDisappearance(shieldImage.transform);
         }
         
         #endregion

@@ -89,7 +89,6 @@ namespace Core.Hidden
             _playAgainstAI = _gameManager.playingAgainstAI;
             _isOnline = _gameManager.isOnline;
             _numberOfRounds = _gameManager.numberOfRounds;
-            Debug.Log(_numberOfRounds);
 
             InitializeGameState();
             InitButtons();
@@ -117,13 +116,12 @@ namespace Core.Hidden
             _isMyTurn = isMyTurn;
             DOTween.KillAll();
     
-            if (_isMyTurn) _gameManager.TextAnimations.PopText(gameGUI.GetText(TMPTextType.PlayerTurn), "You start!");
-            else _gameManager.TextAnimations.Typewriter(gameGUI.GetText(TMPTextType.PlayerTurn), "Waiting...");
+            if (_isMyTurn) _gameManager.DoTweenAnimations.PopText(gameGUI.GetText(TMPTextType.PlayerTurn), "You start!");
+            else _gameManager.DoTweenAnimations.Typewriter(gameGUI.GetText(TMPTextType.PlayerTurn), "Waiting...");
     
             _gameState = gameGUI.StateChange(GameState.Battle);
             if (_isMyTurn) _timerCoroutine = StartCoroutine(TimerCoroutine());
         }
-
 
         private void StartGameAI()
         {
@@ -140,7 +138,7 @@ namespace Core.Hidden
             gameGUI.ResetGUI();
             readyButton.gameObject.SetActive(true);
             _gameState = gameGUI.StateChange(GameState.Setup);
-            _gameManager.TextAnimations.Typewriter(gameGUI.GetText(TMPTextType.Countdown), "Press Ready to go again");
+            _gameManager.DoTweenAnimations.Typewriter(gameGUI.GetText(TMPTextType.Countdown), "Press Ready to go again");
             if (_playAgainstAI) StartGame(true);
         }
 
@@ -198,31 +196,6 @@ namespace Core.Hidden
         }
         
         #endregion
-
-        #region Game Visuals
-
-        // private void OnColorButtonClick(int colorIndex)
-        // {
-        //     string selectedColor = "";
-        //     switch (colorIndex)
-        //     {
-        //         case 0:
-        //             selectedColor = ColorGreenSelect;
-        //             gameGUI.UpdateCursor(0);
-        //             break;
-        //         case 1:
-        //             selectedColor = ColorBlueSelect;
-        //             gameGUI.UpdateCursor(1);
-        //             break;
-        //         case 2:
-        //             selectedColor = ColorRedSelect;
-        //             gameGUI.UpdateCursor(2);
-        //             break;
-        //     }
-        //     gameGUI.CurrentPaintColor = selectedColor;
-        // }
-
-        #endregion
         
         #region Core Mechanics
         private void OnGridButtonClick(Button clickedButton)
@@ -239,7 +212,7 @@ namespace Core.Hidden
             // Regular move logic
             if (_playerGrid.Marks[buttonIndex])
             {
-                _gameManager.TextAnimations.PopText(gameGUI.GetText(TMPTextType.Announcement), "Spot taken!", 0.15f, 0.1f, 1.15f);
+                _gameManager.DoTweenAnimations.PopText(gameGUI.GetText(TMPTextType.Announcement), "Spot taken!", 0.15f, 0.1f, 1.15f);
                 return;
             }
 
@@ -253,12 +226,20 @@ namespace Core.Hidden
         {
             if (_playerGrid.Marks[position] || string.IsNullOrEmpty(color) || !_isMyTurn)
                 return;
+            
+            if (_timerCoroutine != null)
+            {
+                StopCoroutine(_timerCoroutine);
+                _timerCoroutine = null;
+            }
         
             _playerGrid.Marks[position] = true;
             _playerGrid.Color[position] = color;
     
             gameGUI.ChangeButtonColor(position, color);
             gameGUI.ResetAllButtonStates();
+            gameGUI.ResetAllBorderAnimations();
+            gameGUI.ResetTimerVisuals();
             gameGUI.CurrentPaintColor = "";
             gameGUI.ResetCursor();
             powerUps.ResetBluePowerUp();
@@ -270,7 +251,7 @@ namespace Core.Hidden
         {
             if (!_playerGrid.Marks[position] || string.IsNullOrEmpty(_playerGrid.Color[position]))
             {
-                _gameManager.TextAnimations.PopText(gameGUI.GetText(TMPTextType.Announcement), "Can only shield your pieces!", 0.15f, 0.1f, 1.15f);
+                _gameManager.DoTweenAnimations.PopText(gameGUI.GetText(TMPTextType.Announcement), "Can only shield your pieces!", 0.15f, 0.1f, 1.15f);
                 return;
             }
         
@@ -278,7 +259,7 @@ namespace Core.Hidden
             gameGUI.ShowShieldVisual(position);
             
             if (_isOnline) _networkHandler.SendImmuneStatus((byte)position);
-            _gameManager.TextAnimations.PopText(gameGUI.GetText(TMPTextType.Announcement), "Piece shielded!", 0.15f, 0.1f, 1.15f);
+            _gameManager.DoTweenAnimations.PopText(gameGUI.GetText(TMPTextType.Announcement), "Piece shielded!", 0.15f, 0.1f, 1.15f);
     
             _shieldSelectionMode = false;
             powerUps.OnShieldApplied();
@@ -355,7 +336,7 @@ namespace Core.Hidden
             _timerCoroutine = StartCoroutine(TimerCoroutine());
     
             // Visual feedback
-            _gameManager.TextAnimations.PopText(gameGUI.GetText(TMPTextType.Announcement), "Extra turn!", 0.15f, 0.1f, 1.15f);
+            _gameManager.DoTweenAnimations.PopText(gameGUI.GetText(TMPTextType.Announcement), "Extra turn!", 0.15f, 0.1f, 1.15f);
     
             // If needed, trigger AI for an AI extra turn
             if (_playAgainstAI && !_isMyTurn)
@@ -485,7 +466,7 @@ namespace Core.Hidden
                 grid.Immune[position] = false;
                 gameGUI.RemoveShieldVisual(position, !isPlayer1);
                 string message = isPlayer1 ? "Your piece was protected!" : "Opponent's piece was protected!";
-                _gameManager.TextAnimations.PopText(gameGUI.GetText(TMPTextType.Announcement), message, 0.15f, 0.1f, 1.15f);
+                _gameManager.DoTweenAnimations.PopText(gameGUI.GetText(TMPTextType.Announcement), message, 0.15f, 0.1f, 1.15f);
                 ClearSquare(position, !isPlayer1); // Not sure why this is the opposite, keeping your logic
                 return false;
             }
@@ -503,7 +484,6 @@ namespace Core.Hidden
             {
                 GameManager.Instance.VFX.PlayEffectAt(effectTransform, 1, 1.5f);
             }
-
     
             // Small delay
             yield return new WaitForSeconds(0.1f);
@@ -651,13 +631,13 @@ namespace Core.Hidden
             while (_turnTimer > 0)
             {
                 _turnTimer -= Time.deltaTime;
-                _gameManager.TextAnimations.UpdateTimerWithEffects(gameGUI.TimerFill, _turnTimer, _gameManager.timer);
+                gameGUI.UpdateTimer(_turnTimer, _gameManager.timer); // Use the wrapper method
                 yield return null;
             }
-    
-            _gameManager.TextAnimations.ResetTimerVisuals(gameGUI.TimerFill);
+
+            gameGUI.ResetTimerVisuals(); // Use the wrapper method
             _turnTimer = _gameManager.timer;
-    
+
             // Handle shield selection first if active
             if (_shieldSelectionMode)
             {
@@ -686,7 +666,7 @@ namespace Core.Hidden
             {
                 _networkHandler.SendReady(_playerIsReady);
             }
-            _gameManager.TextAnimations.Typewriter(gameGUI.GetText(TMPTextType.Countdown), "Ready and waiting...");
+            _gameManager.DoTweenAnimations.Typewriter(gameGUI.GetText(TMPTextType.Countdown), "Ready and waiting...");
         }
         
         public void HandleReadyStateReceived(bool isMyTurn)
