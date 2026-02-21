@@ -1,6 +1,7 @@
 # Node.js backend ignores
 Server/node_modules/
 Server/npm-debug.log*
+Server/dist/
 
 # IDEs
 .idea/

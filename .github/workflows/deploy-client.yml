@@ -19,5 +19,5 @@ jobs:
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SERVER_SSH_KEY }}
         source: "Client/BuildWebGL/*"
-        target: "/home/${{ secrets.SERVER_USER }}/HiddenGame/Client/BuildWebGL" # Adjust to your NGINX or hosting path
+        target: "/home/${{ secrets.SERVER_USER }}/projects/HiddenGame/client/BuildWebGL" # Adjust to your NGINX or hosting path
         strip_components: 2

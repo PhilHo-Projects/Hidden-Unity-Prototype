@@ -19,7 +19,7 @@ jobs:
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SERVER_SSH_KEY }}
         source: "Server/*"
-        target: "/home/${{ secrets.SERVER_USER }}/HiddenGame/Server" # Adjust destination path
+        target: "/home/${{ secrets.SERVER_USER }}/projects/HiddenGame/server" # Adjust destination path
         strip_components: 1
 
     - name: Restart PM2
@@ -29,13 +29,16 @@ jobs:
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SERVER_SSH_KEY }}
         script: |
-          cd ~/HiddenGame/Server
+          cd ~/projects/HiddenGame/server
           npm install
+          npm run build
           # Start if not running, otherwise restart
           pm2 describe hiddengame > /dev/null
           if [ $? -eq 0 ]; then
+            # Assuming pm2 is tracking dist/server.js already. If not, this still restarts the instance.
             pm2 restart hiddengame
           else
-            pm2 start server.js --name "hiddengame"
+            # First time startup pointing to the compiled typescript file
+            pm2 start dist/server.js --name "hiddengame"
             pm2 save
           fi
