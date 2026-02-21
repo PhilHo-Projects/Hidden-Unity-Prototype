@@ -1,0 +1,23 @@
+name: Deploy Client WebGL
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'Client/BuildWebGL/**'  # Only triggers if the build folder changes
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Copy WebGL Files via SSH
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        source: "Client/BuildWebGL/*"
+        target: "/home/${{ secrets.SERVER_USER }}/HiddenGame/Client/BuildWebGL" # Adjust to your NGINX or hosting path
+        strip_components: 2
