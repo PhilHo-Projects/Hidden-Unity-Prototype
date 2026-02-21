@@ -1,0 +1,19 @@
+// chatHandler.js
+
+const { broadcastOriginalMessageToRoom } = require('./utils');
+
+function handleChatPacket(clientId, decoded, binaryMessage, state, log) {
+    const [senderId, packetType, text] = decoded;
+    
+    if (!text || typeof text !== 'string') {
+        log('Invalid chat message', { clientId });
+        return;
+    }
+
+    log('Chat message received, preparing to broadcast', { clientId, senderId, text });
+    broadcastOriginalMessageToRoom(clientId, binaryMessage, state, log);
+}
+
+module.exports = {
+    handleChatPacket
+};
