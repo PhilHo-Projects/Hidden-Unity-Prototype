@@ -1,0 +1,21 @@
+- main [ref=e3]:
+  - button "Back to workshop" [ref=e11] [cursor=pointer]
+  - complementary [ref=e12]:
+    - generic [ref=e13]: Offline
+    - strong [ref=e14]: Workshop ready.
+  - generic [ref=e15]:
+    - heading "WORKSHOP" [level=1] [ref=e16]
+    - generic [ref=e17]:
+      - paragraph [ref=e18]: "USERNAME: EchoStrike"
+      - generic [ref=e19]:
+        - textbox "Username" [ref=e20]: EchoStrike
+        - button "Randomize username" [ref=e21] [cursor=pointer]
+      - button "NAME LOCKED" [ref=e22] [cursor=pointer]:
+        - generic [ref=e23]: NAME LOCKED
+    - generic [ref=e24]:
+      - paragraph [ref=e25]: OFFLINE
+      - heading "Hidden" [level=2] [ref=e26]
+      - group [ref=e27]:
+        - generic "Advanced" [ref=e28] [cursor=pointer]
+      - button "START PRACTICE" [ref=e29] [cursor=pointer]:
+        - generic [ref=e30]: START PRACTICE

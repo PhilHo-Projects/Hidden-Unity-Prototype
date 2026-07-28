@@ -1,0 +1,7 @@
+- main [ref=e3]:
+  - button "Back to workshop" [ref=e136] [cursor=pointer]
+  - complementary [ref=e12]:
+    - generic [ref=e13]: Launch
+    - strong [ref=e14]: Practice room open.
+    - emphasis [ref=e151]: Battle starting.
+  - generic [ref=e153]: "2"

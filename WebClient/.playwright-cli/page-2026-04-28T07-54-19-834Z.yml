@@ -1,0 +1,12 @@
+- main [ref=e3]:
+  - complementary:
+    - generic: Workshop
+    - strong: Workshop ready.
+    - emphasis: Choose online or offline.
+  - generic [ref=e129]:
+    - heading "WORKSHOP" [level=1] [ref=e130]
+    - generic [ref=e131]:
+      - button "ONLINE" [ref=e132] [cursor=pointer]:
+        - generic [ref=e133]: ONLINE
+      - button "OFFLINE" [ref=e134] [cursor=pointer]:
+        - generic [ref=e135]: OFFLINE

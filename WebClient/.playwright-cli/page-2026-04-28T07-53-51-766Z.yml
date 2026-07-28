@@ -1,0 +1,14 @@
+- main [ref=e3]:
+  - button "Back to workshop" [ref=e115] [cursor=pointer]
+  - complementary [ref=e12]:
+    - generic [ref=e13]: Online
+    - strong [ref=e14]: Workshop ready.
+  - generic [ref=e116]:
+    - heading "WORKSHOP" [level=1] [ref=e117]
+    - generic [ref=e118]:
+      - paragraph [ref=e119]: "USERNAME: EchoStrike"
+      - generic [ref=e120]:
+        - textbox "Username" [ref=e121]: EchoStrike
+        - button "Randomize username" [ref=e122] [cursor=pointer]
+      - button "CONFIRM NAME" [ref=e123] [cursor=pointer]:
+        - generic [ref=e124]: CONFIRM NAME
