@@ -13,12 +13,7 @@ namespace Core.WebSocket
     public class WebSocketNetworkHandler : IndestructibleSingletonBehaviour<WebSocketNetworkHandler>
     {
         // ## Constants
-        private const string ServerUrlHttPs = "wss://sargaz.popnux.com/ws";
-        private const string ServerUrlHttp = "ws://18.226.150.199:8080"; 
-        //private const string ServerUrlUbuntu = "wss://philippeho.popnux.com/ws";
-        //private const string ServerUrlUbuntu = "ws://localhost:8081";
-        private const string ServerUrlUbuntu = "ws://3.99.70.5:8080";
-        private const string ServerUrlLocal = "ws://localhost:8080";
+        private const string ServerUrl = "wss://hidden.philippeho.dev/ws";
 
         // ## Core Components
         private NativeWebSocket.WebSocket _webSocket;
@@ -127,9 +122,7 @@ namespace Core.WebSocket
                     _webSocket = null;
                 }
 
-                //_webSocket = new NativeWebSocket.WebSocket(ServerUrlLocal);
-                //_webSocket = new NativeWebSocket.WebSocket(ServerUrlHttPs);
-                _webSocket = new NativeWebSocket.WebSocket(ServerUrlUbuntu);
+                _webSocket = new NativeWebSocket.WebSocket(ServerUrl);
 
                 _webSocket.OnMessage += ProcessIncomingMessage;
                 _webSocket.OnOpen += HandleOpen;
